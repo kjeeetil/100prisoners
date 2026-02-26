@@ -21,3 +21,5 @@ steps:
       - '--allow-unauthenticated'
 images:
   - 'gcr.io/$PROJECT_ID/onehundredprisoners:$COMMIT_SHA'
+options:
+  logging: CLOUD_LOGGING_ONLY
