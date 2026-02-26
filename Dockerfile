@@ -1,15 +1,22 @@
 # Use the official lightweight Nginx image
 FROM nginx:alpine
 
+# Remove default nginx static assets
+RUN rm -rf /usr/share/nginx/html/*
+
 # Copy the static HTML file into the Nginx server directory and rename it to index.html
-# so Nginx serves it by default at the root URL.
 COPY main.html /usr/share/nginx/html/index.html
 
-# Ensure the file is readable
-RUN chmod 644 /usr/share/nginx/html/index.html
-
-# Copy our custom Nginx configuration to listen on 8080 and redirect all routes to our index.html
+# Copy our custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Fix permissions and ownership
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html && \
+    chmod 644 /usr/share/nginx/html/index.html
+
+# Debug: List files to verify existence
+RUN ls -la /usr/share/nginx/html
 
 # Expose port 8080 mapped to Cloud Run
 EXPOSE 8080
