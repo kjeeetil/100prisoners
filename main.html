@@ -117,6 +117,7 @@
                 <strong style="color: #3498db; font-size: 18px;">Active Session (<span id="activeStratLabel">Cycle</span>)</strong>
                 <span>Rooms Run: <strong id="statTrials">0</strong></span>
                 <span>Win Rate: <strong class="highlight" id="statRate">0.00%</strong></span>
+                <span>Record Cleared: <strong id="statRecord" style="color: #2ecc71;">0</strong> / 100</span>
             </div>
             <div>
                 <strong style="font-size: 14px; color: #aaa;">Global Wins</strong>
@@ -153,7 +154,12 @@
         let sessionTrials = 0;
         let sessionWins = 0;
         
-        let globalStats = { cycle: { trials: 0, wins: 0 }, random: { trials: 0, wins: 0 }, fixed: { trials: 0, wins: 0 } };
+        let globalStats = { 
+            cycle: { trials: 0, wins: 0, maxRecord: 0 }, 
+            random: { trials: 0, wins: 0, maxRecord: 0 }, 
+            fixed: { trials: 0, wins: 0, maxRecord: 0 } 
+        };
+        
         let failureCounts = { cycle: Array(100).fill(0), random: Array(100).fill(0), fixed: Array(100).fill(0) };
 
         // Charts Setup
@@ -255,6 +261,7 @@
         function updateDashboard(updateCharts = true) {
             document.getElementById('statTrials').textContent = sessionTrials;
             document.getElementById('statRate').textContent = sessionTrials === 0 ? "0.00%" : ((sessionWins / sessionTrials) * 100).toFixed(2) + '%';
+            document.getElementById('statRecord').textContent = globalStats[currentStrategy].maxRecord;
             
             document.getElementById('globalCycle').textContent = globalStats.cycle.wins;
             document.getElementById('globalRandom').textContent = globalStats.random.wins;
@@ -365,6 +372,11 @@
                     allSurvived = false;
                     failureCounts[strategy][p]++;
                     
+                    // Update Record based on how many succeeded before this failure
+                    if (p > globalStats[strategy].maxRecord) {
+                        globalStats[strategy].maxRecord = p;
+                    }
+                    
                     for (let rest = p + 1; rest < 100; rest++) {
                         document.getElementById(`p-${rest}`).classList.add('dead');
                     }
@@ -380,6 +392,7 @@
                 tracker.innerHTML = `<span style="color:#2ecc71">All 100 survived! Click any prisoner to view their sequence.</span>`; 
                 sessionWins++; 
                 globalStats[strategy].wins++; 
+                globalStats[strategy].maxRecord = 100;
             }
             
             updateDashboard(true); 
@@ -414,15 +427,22 @@
                     if (!found) { 
                         allSurvived = false; 
                         failureCounts[strategy][p]++; 
+                        
+                        // Stop immediately and update Record based on `p` (the count of successes)
+                        if (p > globalStats[strategy].maxRecord) {
+                            globalStats[strategy].maxRecord = p;
+                        }
                         break; 
                     }
                 }
                 
                 sessionTrials++; 
                 globalStats[strategy].trials++;
+                
                 if (allSurvived) { 
                     sessionWins++; 
                     globalStats[strategy].wins++; 
+                    globalStats[strategy].maxRecord = 100;
                 }
                 if (sessionTrials % updateInterval === 0 || i === count - 1) {
                     updateDashboard(true);
@@ -435,7 +455,6 @@
 
         // Hover Highlighting Logic for Loops
         grid.addEventListener('mouseover', (e) => {
-            // ONLY highlight the loops if we are actually using the Cycle strategy
             if (currentStrategy !== 'cycle') return; 
 
             const prisonerCell = e.target.closest('.prisoner');
@@ -453,7 +472,6 @@
         });
 
         grid.addEventListener('mouseout', (e) => {
-            // Unconditionally remove the class when hovering off, just to be safe
             document.querySelectorAll('.prisoner.on-same-loop').forEach(el => el.classList.remove('on-same-loop'));
         });
 
@@ -522,7 +540,11 @@
         
         document.getElementById('btnReset').onclick = () => {
             if(isAnimating) return;
-            globalStats = { cycle: { trials: 0, wins: 0 }, random: { trials: 0, wins: 0 }, fixed: { trials: 0, wins: 0 } };
+            globalStats = { 
+                cycle: { trials: 0, wins: 0, maxRecord: 0 }, 
+                random: { trials: 0, wins: 0, maxRecord: 0 }, 
+                fixed: { trials: 0, wins: 0, maxRecord: 0 } 
+            };
             failureCounts = { cycle: Array(100).fill(0), random: Array(100).fill(0), fixed: Array(100).fill(0) };
             resetSessionChart();
             
