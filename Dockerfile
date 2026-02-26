@@ -5,8 +5,8 @@ FROM nginx:alpine
 # so Nginx serves it by default at the root URL.
 COPY main.html /usr/share/nginx/html/index.html
 
-# Expose port 80 (Cloud Run will automatically handle traffic routing)
-EXPOSE 80
+# Expose port (Cloud Run sets the PORT environment variable, defaults to 8080)
+EXPOSE 8080
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Update the Nginx config to listen on $PORT instead of 80, then start Nginx
+CMD sh -c "sed -i 's/listen  *80;/listen '${PORT:-8080}';/g' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
