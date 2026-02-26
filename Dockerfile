@@ -1,9 +1,6 @@
 # Use the official lightweight Nginx image
 FROM nginx:alpine
 
-# Remove default nginx static assets
-RUN rm -rf /usr/share/nginx/html/*
-
 # Copy the static HTML file into the Nginx server directory and rename it to index.html
 COPY main.html /usr/share/nginx/html/index.html
 
